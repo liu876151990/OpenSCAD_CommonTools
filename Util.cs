@@ -219,8 +219,11 @@ namespace CommonTools
 		[DllImport("user32.dll", CharSet = CharSet.Auto,CallingConvention = CallingConvention.StdCall)]
 		public static extern int CallNextHookEx(int idHook, int nCode, IntPtr wParam, IntPtr lParam);
 
-		//Declare the wrapper managed POINT class.
-		[StructLayout(LayoutKind.Sequential)]
+        [DllImport("kernel32.dll")]
+        public static extern IntPtr GetModuleHandle(string name);
+
+        //Declare the wrapper managed POINT class.
+        [StructLayout(LayoutKind.Sequential)]
 		public class POINT
 		{
 			public int x;
@@ -266,9 +269,11 @@ namespace CommonTools
 			if (enable && m_hHook == 0)
 			{
 				m_HookCallback = new WinUtil.HookProc(HookCallbackProc);
-                Module module = Assembly.GetExecutingAssembly().GetModules()[0];
-				m_hHook = WinUtil.SetWindowsHookEx(WinUtil.WH_KEYBOARD_LL, m_HookCallback, Marshal.GetHINSTANCE(module),0);
-				if (m_hHook == 0)
+                //Module module = Assembly.GetExecutingAssembly().GetModules()[0]; .net 2.0  .net4.0ª·∑µªÿ ß∞‹
+                //m_hHook = WinUtil.SetWindowsHookEx(WinUtil.WH_KEYBOARD_LL, m_HookCallback, Marshal.GetHINSTANCE(module),0);
+                IntPtr modulePtr = WinUtil.GetModuleHandle(System.Diagnostics.Process.GetCurrentProcess().MainModule.ModuleName);
+                m_hHook = WinUtil.SetWindowsHookEx(WinUtil.WH_KEYBOARD_LL, m_HookCallback, modulePtr, 0);
+                if (m_hHook == 0)
 				{
 					MessageBox.Show("SetHook Failed. Please make sure the 'Visual Studio Host Process' on the debug setting page is disabled");
 					return;
